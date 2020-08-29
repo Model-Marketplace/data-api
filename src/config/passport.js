@@ -7,12 +7,12 @@ const SECRET_KEY = 'secretKey';
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: 'secretKey'
+  secretOrKey: SECRET_KEY
 };
 
 const strategy = (payload, done) => {
-  const { username } = payload;
-  User.findOne({ username })
+  const { sub } = payload;
+  User.findOne({ _id: sub })
     .then(user => {
       if (user) {
         return done(null, user);

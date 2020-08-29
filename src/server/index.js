@@ -8,6 +8,8 @@ const port = 3000 || process.env.PORT;
 const auth = require('../middleware/auth');
 
 const user = require('../routers/user');
+const profile = require('../routers/profile');
+const repo = require('../routers/repo');
 
 app.use(cors());
 app.use(express.json());
@@ -17,11 +19,13 @@ require('../config/database');
 require('../config/passport');
 
 app.use(user);
+app.use(profile);
+app.use(repo);
 
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
 app.listen(port, () => {
-  console.log('App is listening on port: ' + port);
+  console.log(`App is listening on port ${port}`);
 });

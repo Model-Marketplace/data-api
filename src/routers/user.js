@@ -9,6 +9,7 @@ const User = require('../models/user');
 const SALT_ROUNDS = 10;
 const SECRET_KEY = 'secretKey';
 
+// get user by jwt token
 router.get(
   '/users',
   passport.authenticate('jwt', { session: false }),
@@ -18,28 +19,35 @@ router.get(
   }
 );
 
-router.post('/users/register', (req, res) => {
+// create new user
+router.post('/users/create', (req, res) => {
   const { username, password } = req.body;
   try {
-    bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
-      const user = new User({
-        username,
-        password: hash
-      });
+    User.findOne({ username }).then(user => {
+      if (user) {
+        res.status(400).send({ erorr: 'Username is taken' });
+      } else {
+        bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
+          const user = new User({
+            username,
+            password: hash
+          });
+          const token = jwt.sign({ sub: user._id }, SECRET_KEY, {
+            expiresIn: '1h'
+          });
 
-      const token = jwt.sign({ username }, SECRET_KEY, {
-        expiresIn: '1h'
-      });
-
-      user.save().then(() => {
-        res.status(200).send({ token });
-      });
+          user.save().then(() => {
+            res.status(200).send({ token });
+          });
+        });
+      }
     });
   } catch (err) {
     res.status(400).send({ error: 'Unable to create new user' });
   }
 });
 
+// login user
 router.post('/users/login', (req, res) => {
   const { username } = req.body;
   try {
@@ -47,7 +55,7 @@ router.post('/users/login', (req, res) => {
       .then(user => {
         bcrypt.compare(req.body.password, user.password).then(result => {
           if (result) {
-            const token = jwt.sign({ username }, SECRET_KEY, {
+            const token = jwt.sign({ sub: user._id }, SECRET_KEY, {
               expiresIn: '1h'
             });
             res.status(200).send({ token });
