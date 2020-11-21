@@ -5,11 +5,10 @@ const cors = require('cors');
 const app = express();
 const port = 3000 || process.env.PORT;
 
-const auth = require('../middleware/auth');
-
 const user = require('../routers/user');
 const profile = require('../routers/profile');
 const repo = require('../routers/repo');
+const search = require('../routers/search');
 
 app.use(cors());
 app.use(express.json());
@@ -21,6 +20,7 @@ require('../config/passport');
 app.use(user);
 app.use(profile);
 app.use(repo);
+app.use(search);
 
 app.get('/', (req, res) => {
   res.send('Hello World');

@@ -6,15 +6,12 @@ const repoSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
     description: {
       type: String,
       required: true
-    }
+    },
+    owners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
   },
   {
     timestamps: true
