@@ -3,6 +3,7 @@ const router = new express.Router();
 const passport = require('passport');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 
 const User = require('../models/user');
 const Repo = require('../models/repo');
@@ -64,6 +65,23 @@ router.post('/users/login', (req, res) => {
     res.status(400).send({ message: 'Unable to login user' });
   }
 });
+
+// TO-DO: nodemailer password reset
+// router.post('/users/reset', (req, res) => {
+//   const { email } = req.body;
+//   try {
+//     User.findOne({ email })
+//       .then((user) => {
+//         let testAccount = await nodemailer.createTestAccount();
+
+//         let transporter = nodemailer.createTransport({
+          
+//         });
+//       })
+//   } catch (err) {
+//     res.status(400).send({ message: 'Unable to find user' });
+//   }
+// });
 
 router.post('/users/logout', (req, res) => {
   // expire token in passport
