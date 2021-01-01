@@ -13,6 +13,10 @@ const repoSchema = new mongoose.Schema(
     type: {
       type: String
     },
+    usage: {
+      type: Number,
+      required: true
+    },
     owners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
   },

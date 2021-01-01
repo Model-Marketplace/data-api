@@ -24,6 +24,7 @@ router.post(
             owners: [req.user._id],
             contributors: [req.user._id],
             description,
+            usage: 0
           });
 
           user.repos.push(repo._id);
@@ -74,9 +75,12 @@ router.get(
     const { id } = req.params;
     try {
       Repo.findById(id)
-        .populate({ path: 'owner', select: 'username' })
+        .populate({ path: 'owners', select: 'username' })
+        .populate({ path: 'contributors', select: 'username' })
         .then((repo) => {
           if (repo) {
+            console.log('tests');
+            console.log(repo);
             res.status(200).send(repo);
           } else {
             res
