@@ -40,7 +40,9 @@ router.post(
           res.status(400).send({ message: 'Unable to create new repo' })
         );
     } catch (err) {
-      res.status(400).send({ message: 'Unable to create new repo' });
+      res
+        .status(400)
+        .send({ message: 'Unable to create new repo' });
     }
   }
 );
@@ -62,7 +64,9 @@ router.post(
           res.status(200).send({ repos });
         });
     } catch (err) {
-      res.status(400).send({ message: 'Unable to get repos' });
+      res
+        .status(400)
+        .send({ message: 'Unable to get repos' });
     }
   }
 );
@@ -79,8 +83,6 @@ router.get(
         .populate({ path: 'contributors', select: 'username' })
         .then((repo) => {
           if (repo) {
-            console.log('tests');
-            console.log(repo);
             res.status(200).send(repo);
           } else {
             res
@@ -89,9 +91,43 @@ router.get(
           }
         });
     } catch (err) {
-      res.status(400).send({ message: `Unable to get repo with id ${id}` });
+      res
+        .status(400)
+        .send({ message: `Unable to get repo with id ${id}` });
     }
   }
 );
+
+// update repo by id
+router.put(
+  '/repos/:id',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    try {
+      Repo.findById(id, (err, repo) => {
+        if (err) {
+          res.status(400).send({ message: `Unable to get repo with id ${id}` });
+        } else {
+          if (repo.owners.includes(req.user._id)) {
+            // case: user is a repo owner
+            repo.name = name;
+            repo.description = description;
+            repo.save().then((repo) => {
+              res.status(200).send(repo);
+            });
+          } else {
+            // case: user is not a repo owner
+            res.status(403).send({ message: 'Unauthorized access to update repo' });
+          }
+        }
+      });
+    } catch (err) {
+      res
+        .status(400)
+        .send({ message: `Unable to get repo with id ${id}` });
+    }
+  });
 
 module.exports = router;
