@@ -18,7 +18,12 @@ const repoSchema = new mongoose.Schema(
       type: Number,
       required: true
     },
+    labels: {
+      type: Object,
+      // required: true
+    },
     owners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    pendingOwners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
   },
   {

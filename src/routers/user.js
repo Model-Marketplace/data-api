@@ -6,13 +6,12 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
 const User = require('../models/user');
-const Repo = require('../models/repo');
 
 const SALT_ROUNDS = 10;
 const SECRET_KEY = 'secretKey';
 
 // create new user
-router.post('/users/create', (req, res) => {
+router.post('/api/users/create', (req, res) => {
   const { email, password, firstName, lastName } = req.body;
   try {
     User.findOne({ email }).then((user) => {
@@ -44,7 +43,7 @@ router.post('/users/create', (req, res) => {
 });
 
 // login user
-router.post('/users/login', (req, res) => {
+router.post('/api/users/login', (req, res) => {
   const { email } = req.body;
   try {
     User.findOne({ email })
@@ -83,14 +82,14 @@ router.post('/users/login', (req, res) => {
 //   }
 // });
 
-router.post('/users/logout', (req, res) => {
+router.post('/api/users/logout', (req, res) => {
   // expire token in passport
   res.status(200).send({ message: 'Successfully logged out' });
 });
 
 // get user by jwt token
 router.get(
-  '/users',
+  '/api/users',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { _id } = req.user;
@@ -111,7 +110,7 @@ router.get(
 
 // get user repos
 router.get(
-  '/users/repos',
+  '/api/users/repos',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { _id } = req.user;

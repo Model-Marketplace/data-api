@@ -4,7 +4,7 @@ const passport = require('passport');
 const Repo = require('../models/repo');
 
 router.post(
-  '/search',
+  '/api/search',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { term } = req.body;

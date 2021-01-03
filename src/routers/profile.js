@@ -5,7 +5,7 @@ const User = require('../models/user');
 
 // get profile by username
 router.get(
-  '/profiles/:username',
+  '/api/profiles/:username',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { username } = req.params;
@@ -36,7 +36,7 @@ router.get(
 
 // profile actions
 router.post(
-  '/profiles/:id/action',
+  '/api/profiles/:id/action',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     console.log('action');

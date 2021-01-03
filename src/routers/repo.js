@@ -3,10 +3,11 @@ const router = new express.Router();
 const passport = require('passport');
 const Repo = require('../models/repo');
 const User = require('../models/user');
+const Notification = require('../models/notification');
 
 // create new repo
 router.post(
-  '/repos/create',
+  '/api/repos/create',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { name, description } = req.body;
@@ -49,7 +50,7 @@ router.post(
 
 // get all repos
 router.post(
-  '/repos',
+  '/api/repos',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { skip } = req.body;
@@ -73,13 +74,14 @@ router.post(
 
 // get repo by id
 router.get(
-  '/repos/:id',
+  '/api/repos/:id',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { id } = req.params;
     try {
       Repo.findById(id)
         .populate({ path: 'owners', select: 'username' })
+        .populate({ path: 'pendingOwners', select: 'username' })
         .populate({ path: 'contributors', select: 'username' })
         .then((repo) => {
           if (repo) {
@@ -100,13 +102,13 @@ router.get(
 
 // update repo by id
 router.put(
-  '/repos/:id',
+  '/api/repos/:id',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
     try {
-      Repo.findById(id, (err, repo) => {
+      Repo.findById(id).exec((err, repo) => {
         if (err) {
           res.status(400).send({ message: `Unable to get repo with id ${id}` });
         } else {
@@ -122,6 +124,68 @@ router.put(
             res.status(403).send({ message: 'Unauthorized access to update repo' });
           }
         }
+      });
+    } catch (err) {
+      res
+        .status(400)
+        .send({ message: `Unable to get repo with id ${id}` });
+    }
+  });
+
+// invite co-owner to repo by id
+router.post(
+  '/api/invite/:id',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    const { id } = req.params;
+    const { invitee } = req.body;
+    try {
+      Repo.findById(id)
+        .populate({ path: 'owners', select: 'username' })
+        .populate({ path: 'pendingOwners', select: 'username' })
+        .populate({ path: 'contributors', select: 'username' })
+        .exec((err, repo) => {
+          if (err) {
+            res.status(400).send({ message: `Unable to get repo with id ${id}` });
+          } else {
+            if (repo.owners.map((owner) => owner._id).includes(req.user._id)) {
+              // case: user is a repo owner
+              User.find({ username: invitee }, (err, users) => {
+                if (users.length == 0) {
+                  // case: invitee is not a user
+                  res.status(400).send({ message: `Unable to find invitee with username ${invitee}` })
+                } else {
+                  // case: invitee is a user
+                  const notification = new Notification({
+                    title: 'Co-Ownership Invitation',
+                    body: `${req.user.username} has invited you to co-own ${repo.name}`,
+                    read: false,
+                    sender: req.user._id,
+                    receiver: users[0]._id
+                  });
+                  
+                  users[0].notifications.push(notification._id);
+                  users[0].save();
+
+                  if (!repo.pendingOwners.includes(users[0]._id)) {
+                    // append invitee to pending list if not there yet
+                    repo.pendingOwners.push(users[0]._id);
+                    repo.save();
+                  }
+
+                  notification.save().then(() => {
+                    res.status(200).send({
+                      message: `Successfully sent notification to user with username ${users[0].username}`,
+                      repo
+                    });
+                  });
+                }
+              });
+            } else {
+              // case: user is not a repo owner
+              res.status(403).send({ message: 'Unauthorized access invite co-owner for repo' });
+            }
+          }
       });
     } catch (err) {
       res
