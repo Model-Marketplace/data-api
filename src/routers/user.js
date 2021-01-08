@@ -13,8 +13,8 @@ const SECRET_KEY = 'secretKey';
 // create new user
 router.post('/api/users/create', (req, res) => {
   const { email, password, firstName, lastName } = req.body;
-  try {
-    User.findOne({ email }).then((user) => {
+  User
+    .findOne({ email }).then((user) => {
       if (user) {
         res.status(406).send({ message: 'Username is taken' });
       } else {
@@ -36,17 +36,16 @@ router.post('/api/users/create', (req, res) => {
           });
         });
       }
-    });
-  } catch (err) {
-    res.status(400).send({ message: 'Unable to create new user' });
-  }
+    })
+    .catch(() => res.status(400).send({ message: 'Unable to create new user' }));
 });
 
 // login user
 router.post('/api/users/login', (req, res) => {
   const { email } = req.body;
   try {
-    User.findOne({ email })
+    User
+      .findOne({ email })
       .then((user) => {
         bcrypt.compare(req.body.password, user.password).then((result) => {
           if (result) {
@@ -59,13 +58,13 @@ router.post('/api/users/login', (req, res) => {
           }
         });
       })
-      .catch((err) => res.status(400).send('Invalid username'));
+      .catch(() => res.status(400).send('Invalid username'));
   } catch (err) {
     res.status(400).send({ message: 'Unable to login user' });
   }
 });
 
-// TO-DO: nodemailer password reset
+// TO-DO: password reset with nodemailer
 // router.post('/users/reset', (req, res) => {
 //   const { email } = req.body;
 //   try {
@@ -82,6 +81,7 @@ router.post('/api/users/login', (req, res) => {
 //   }
 // });
 
+// TO-DO: logout
 router.post('/api/users/logout', (req, res) => {
   // expire token in passport
   res.status(200).send({ message: 'Successfully logged out' });
@@ -93,31 +93,13 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { _id } = req.user;
-    try {
-      User.findById(_id)
-        .select('username')
-        .then((user) =>
-          res.status(200).send({ message: `Authenticated as ${user.username}` })
-        )
-        .catch((err) =>
-          res.status(400).send({ message: 'Unable to authenticate' })
-        );
-    } catch (err) {
-      res.status(400).send({ message: 'Unable to authenticate' });
-    }
-  }
-);
-
-// get user repos
-router.get(
-  '/api/users/repos',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    const { _id } = req.user;
-    try {
-    } catch (err) {
-      res.status(400).send({ message: 'Unable to get user repos' });
-    }
+    User
+      .findById(_id)
+      .select('username')
+      .then((user) =>
+        res.status(200).send({ message: `Authenticated as ${user.username}` })
+      )
+      .catch(() =>res.status(400).send({ message: 'Unable to authenticate' }));
   }
 );
 

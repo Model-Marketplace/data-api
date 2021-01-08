@@ -9,17 +9,15 @@ router.post(
   (req, res) => {
     const { term } = req.body;
     const reg = new RegExp(term, 'i');
-    Repo.find({
-      $or: [{ name: { $regex: reg } }, { description: { $regex: reg } }],
-    })
+    Repo
+      .find({
+        $or: [{ name: { $regex: reg } }, { description: { $regex: reg } }],
+      })
       .limit(5)
       .then((repos) => {
         res.status(200).send({ repos });
-      });
-    try {
-    } catch (err) {
-      res.status(400).send({ message: 'Unable to get search results' });
-    }
+      })
+      .catch(() => res.status(400).send({ message: 'Unable to get search results' }))
   }
 );
 

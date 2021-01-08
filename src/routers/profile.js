@@ -9,28 +9,21 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     const { username } = req.params;
-    try {
-      User.findOne({ username })
-        .select('username bio createdAt')
-        .populate({
-          path: 'repos',
-          populate: { path: 'contributors owners', select: 'username' },
-        })
-        .populate({ path: 'following', select: 'username' })
-        .populate({ path: 'followers', select: 'username' })
-        .then((user) => {
-          if (user) {
-            res.status(200).send({ user });
-          }
-        })
-        .catch(() =>
-          res
-            .status(400)
-            .send({ message: `Unable to get profile with id ${id}` })
-        );
-    } catch (err) {
-      res.status(400).send({ message: `Unable to get profile with id ${id}` });
-    }
+    User
+      .findOne({ username })
+      .select('username bio createdAt')
+      .populate({
+        path: 'repos',
+        populate: { path: 'contributors owners', select: 'username' },
+      })
+      .populate({ path: 'following', select: 'username' })
+      .populate({ path: 'followers', select: 'username' })
+      .then((user) => {
+        if (user) {
+          res.status(200).send({ user });
+        }
+      })
+      .catch(() => res.status(400).send({ message: `Unable to get profile with id ${id}` }));
   }
 );
 
@@ -39,46 +32,40 @@ router.post(
   '/api/profiles/:id/action',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    console.log('action');
-    console.log(req.user);
     const { action } = req.body;
-
     switch (action) {
       case 'follow': {
         // check if user is trying to follow himself/herself
         if (req.user.id === req.params.id) {
           res.status(400).send({ message: 'Unable to follow oneself' });
         } else {
-          try {
-            User.findById(req.params.id)
-              .then((user1) => {
-                User.findById(req.user.id).then((user2) => {
-                  // check if user2 already follows user1
-                  if (user1.followers.includes(user2.id)) {
-                    // case: user2 follows user1
-                    res.status(400).send({
-                      message: `User ${user1.username} is already being followed`,
-                    });
-                  } else {
-                    // case: user2 does not follow user1
-                    // add user2 to user1 followers list
-                    // add user1 to user2 following list
-                    user1.followers.push(user2.id);
-                    user2.following.push(user1.id);
+          User
+            .findById(req.params.id)
+            .then((user1) => {
+              User.findById(req.user.id).then((user2) => {
+                // check if user2 already follows user1
+                if (user1.followers.includes(user2.id)) {
+                  // case: user2 follows user1
+                  res.status(400).send({
+                    message: `User ${user1.username} is already being followed`,
+                  });
+                } else {
+                  // case: user2 does not follow user1
+                  // add user2 to user1 followers list
+                  // add user1 to user2 following list
+                  user1.followers.push(user2.id);
+                  user2.following.push(user1.id);
 
-                    user1.save();
-                    user2.save();
+                  user1.save();
+                  user2.save();
 
-                    res.status(200).send({
-                      message: `Successfully followed user ${user1.username}`,
-                    });
-                  }
-                });
-              })
-              .catch((err) => {});
-          } catch (err) {
-            res.status(400).send({ message: 'Unable to follow user' });
-          }
+                  res.status(200).send({
+                    message: `Successfully followed user ${user1.username}`,
+                  });
+                }
+              });
+            })
+            .catch((err) => res.status(400).send({ message: `Unable to find user with id ${req.params.id}` }));
         }
         break;
       }
@@ -87,8 +74,8 @@ router.post(
         if (req.user.id === req.params.id) {
           res.status(400).send({ message: 'Unable to unfollow oneself' });
         } else {
-          try {
-            User.findById(req.params.id).then((user1) => {
+          User
+            .findById(req.params.id).then((user1) => {
               User.findById(req.user.id).then((user2) => {
                 // check if user2 follows user1 in the first place
                 if (user1.followers.includes(user2.id)) {
@@ -114,11 +101,8 @@ router.post(
                   });
                 }
               });
-            });
-            console.log('unfollow triggered');
-          } catch (err) {
-            res.status(400).send({ message: 'Unable to unfollow user' });
-          }
+          })
+          .catch(() => res.status(400).send({ message: `Unable to find user with id ${req.params.id}` }));
         }
         break;
       }
